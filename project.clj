@@ -8,4 +8,4 @@
   
   
   :jvm-opts  [~(str "-Djava.library.path=leap_lib/x64:" (System/getenv "LD_LIBRARY_PATH"))]
-  :main ru.profitware.prde-motion.example.higher-hand)
+  :main ru.profitware.prde-motion.example.gesture)

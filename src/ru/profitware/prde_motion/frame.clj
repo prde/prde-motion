@@ -5,13 +5,14 @@
   (:import (com.leapmotion.leap Frame
                                 Pointable PointableList
                                 Hand HandList
+                                Gesture GestureList
                                 Finger FingerList
                                 Tool ToolList)))
 
 
 (defn ^HandList hands [^Frame frame]
   (.hands frame))
- 
+
 (defn hands? [^Frame frame]
   (not (.isEmpty (.hands frame))))
 
@@ -149,6 +150,21 @@
 (defn ^Pointable lowest-pointable [^Frame frame]
   (when (pointables? frame)
     (apply min-key #(-> % l-pointable/tip-position l-vector/y) (pointables frame))))
+
+(defn ^GestureList gestures [^Frame frame]
+  (.gestures frame))
+
+(defn gestures? [^Frame frame]
+  (not (.isEmpty (.gestures frame))))
+
+(defn ^Gesture raw-gesture [^Frame frame gesture-id]
+  (.gesture frame gesture-id))
+
+(defn gesture [^Frame frame gesture-id]
+  {:pre [(integer? gesture-id)]}
+  (let [gesture (.gesture frame gesture-id)]
+    (when (.isValid gesture)
+      gesture)))
 
 (defn valid? [^Frame frame]
   (.isValid frame))
