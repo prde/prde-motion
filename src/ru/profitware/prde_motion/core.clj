@@ -4,13 +4,14 @@
             [ru.profitware.prde-motion.frame :as l-frame]
             [ru.profitware.prde-motion.pointable :as l-pointable]
             [ru.profitware.prde-motion.hand :as l-hand]
+            [ru.profitware.prde-motion.gestures :as l-gesture]
             [ru.profitware.prde-motion.screen :as l-screen]
             [ru.profitware.prde-motion.protocols :as l-protocols]
             [ru.profitware.prde-motion.extended-protos :as l-eprotos])
   (:import (com.leapmotion.leap Controller
                                 Listener
                                 Frame
-                                Hand Finger Tool Pointable
+                                Hand Finger Gesture Tool Pointable
                                 Vector)))
 
 
@@ -27,6 +28,9 @@
 
 (defn hand? [potential-hand]
   (instance? Hand potential-hand))
+
+(defn gesture? [gesture]
+  (instance? Gesture gesture))
 
 (defn pointable? [potential-pointable]
   (instance? Pointable potential-pointable))
@@ -113,6 +117,12 @@
 (def rightmost-pointable l-protocols/rightmost-pointable)
 (def highest-pointable l-protocols/highest-pointable)
 (def lowest-pointable l-protocols/lowest-pointable)
+
+;; Gestures
+;;;;;;;;;;;
+(def gestures? l-frame/gestures?)
+(def gestures l-frame/gestures)
+(def raw-gesture l-frame/raw-gesture)
 
 ;; Leap *Lists
 ;;;;;;;;;;;;;;;

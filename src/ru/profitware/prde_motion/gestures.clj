@@ -1,113 +1,115 @@
 (ns ru.profitware.prde-motion.gestures
-  (:require [ru.profitware.prde-motion.core :as leap]
-            [ru.profitware.prde-motion.frame :as l-frame :refer [hand-kw]]
-            [ru.profitware.prde-motion.hand :as l-hand :refer [fist?]]
-            [ru.profitware.prde-motion.gestures.fundamental :as fundamental]))
+  (:refer-clojure :exclude [empty? count])
+  (:require [ru.profitware.prde-motion.pointable :as l-pointable]
+            [ru.profitware.prde-motion.vector :as l-vector])
+  (:import (com.leapmotion.leap Controller
+                                Frame
+                                Hand HandList
+                                Gesture Gesture$Type Gesture$State
+                                GestureList GestureList$GestureListIterator
+                                Pointable PointableList)))
 
-;; This is a preliminary library for basic gestures that
-;; developers would commonly want to detect.
-;;
-;; THIS IS ALPHA AND COULD BE REMOVED IN THE FUTURE
+;; Gesture Types
+(def gesture-circle Gesture$Type/TYPE_CIRCLE)
+(def gesture-key-tap Gesture$Type/TYPE_KEY_TAP)
+(def gesture-screen-tap Gesture$Type/TYPE_SCREEN_TAP)
+(def gesture-swipe Gesture$Type/TYPE_SWIPE)
 
-;; All gesture predicates return a map on `true` (ie: if they are detected)
-;; that offers more descriptive information about the gesture.
 
-(def ^:dynamic *window* 10)
-(def ^:dynamic *threshold* (* 1.5 *window*))
+;; Gesture States
+(def gesture-start Gesture$State/STATE_START)
+(def gesture-update Gesture$State/STATE_UPDATE)
+(def gesture-stop Gesture$State/STATE_STOP)
 
-;; TODO: no or VERY little velocity on the Z axis
-(defn finger-flash?
-  "Can we detect a user flashing all fingers on a single hand?
-  We need to be at a frame with 0 fingers,
-  where there 4 or more fingers in a previous frames.
-  This is essentially the motion of flashing your fingers out,
-  and then making a fist"
-  [frame-vec]
-  (fundamental/gesture frame-vec :finger-flash
-    [fundamental/max-one-hand? fundamental/flashed-fingers?
-     fundamental/currently-no-fingers? fundamental/no-hand-movement?]))
+;; Enable Gestures
+(defn enable-gesture [^Controller controller gesture-type]
+  (.enableGesture controller gesture-type))
 
-(defn punch?
-  "Can we detect a user punching? - a fist moving perpendicular to the palm direction
-  We need to be at a frame with 0-1 fingers,
-  where the the hand's summed Z motion is nearly 0
-  But the max Z velocity is 'much higher' than 0"
-  [frame-vec]
-  (fundamental/gesture frame-vec :punch
-    [fundamental/fist? fundamental/moving-forward? fundamental/returned-to-position?]))
+(defn gesture-enabled? [^Controller controller gesture-type]
+  (.isGestureEnabled controller gesture-type))
 
-(defn bop?
-  "Can we detect a user bopping their hand - like the motion for 'rock' in rock-paper-scissors"
-  [frame-vec])
 
-(defn pressing-the-leap?
-  "Can we detect the user making a motion like they're pressing the Leap Motion"
-  [frame-vec])
+;; Gesture List
+;;;;;;;;;;;;;
+;;    We won't support IFn lookup, but it should work with `nth`
+(defn count [^GestureList gesture-list]
+  (.count gesture-list))
 
-(defn finger-click?
-  "Can we detect the user clicking with their primary finger?"
-  [frame-vec])
+(defn empty? [^GestureList gesture-list]
+  (.isEmpty gesture-list))
 
-;; The "Slide" is the the hand totally flat (like a karate chop).
-;; "slide-down" is the same as "hand-press-down"
 
-(defn slide-left?
-  "Can we detect the user is moving a chop-hand mostly left?"
-  [frame-vec])
 
-(defn slide-right?
-  "Can we detect the user is moving a chop-hand mostly right?"
-  [frame-vec])
+;; Gesture
+;;;;;;;;;;;;;
+(defn ^Frame frame [^Gesture gesture]
+  (.frame gesture))
 
-(defn left-slide-left?
-  "Can we detect the user is making a chop-hand with the leftmost-hand, and moving it mostly left?"
-  [frame-vec])
+(defn valid? [^Gesture gesture]
+  (.isValid gesture))
 
-(defn left-slide-right?
-  "Can we detect the user is making a chop-hand with the leftmost-hand, and moving it mostly right?"
-  [frame-vec])
+(defn duration [^Gesture gesture]
+  (.duration gesture))
 
-(defn right-slide-left?
-  "Can we detect the user is making a chop-hand with the rightmost-hand, and moving it mostly left?"
-  [frame-vec])
+(defn duration-seconds [^Gesture gesture]
+  (.durationSeconds gesture))
 
-(defn right-slide-right?
-  "Can we detect the user is making a chop-hand with the rightmost-hand, and moving it mostly right?"
-  [frame-vec])
+(defn ^Gesture$State state [^Gesture gesture]
+  (.state gesture))
 
-(defn chop?
-  "Can we detect the user is making a karate chop motion?"
-  [frame-vec])
+(defn ^Gesture$Type g-type [^Gesture gesture]
+  (.type gesture))
 
-(defn left-chop?
-  "Can we detect the user is making a karate chop motion with the leftmost-hand?"
-  [frame-vec])
+(comment defn palm [^Gesture gesture]
+  {:normal (.palmNormal gesture) ; The vector outward/orthog
+   :position (.palmPosition gesture) ; The center of the palm
+   :velocity (.palmVelocity gesture)
+   :direction (.direction gesture)})
 
-(defn right-chop?
-  "Can we detect the user is making a karate chop motion with the rightmost-hand?"
-  [frame-vec])
+(defn equal? [^Gesture gesture ^Gesture other]
+  (.equals gesture other))
 
-(defn slide-down?
-  "Can we detect the user with a horizontal/palm-down chop-hand, moving mostly downwards?"
-  [frame-vec])
+(defn equal? [^Gesture$Type gesture-type ^Gesture$Type other]
+  (.equals gesture-type other))
 
-(defn slide-up?
-  "Can we detect the user with a horizontal/palm-up chop-hand, moving mostly upwards?"
-  [frame-vec])
+(defn equal? [^Gesture$State gesture-state ^Gesture$State other]
+  (.equals gesture-state other))
 
-(defn slide-together?
-  "Can we detect the user with vertical chop-hands, moving closer together along the x-axis; crushing the can?"
-  [frame-vec])
 
-(defn slide-apart?
-  "Can we detect the user with vertical chop-hands, moving apart along the x-axis; open the curtains; splitting the sea?"
-  [frame-vec])
+(defn ^HandList hands [^Gesture gesture]
+  (.hands gesture))
 
-(defn pull-apart?
-  "Can we detect the user with two fists, moving apart along the x-axis?"
-  [frame-vec])
+(defn hands? [^Gesture gesture]
+  (not (.isEmpty (.hands gesture))))
 
-(defn tear?
-  "Can we detect the user with two fists, moving apart along the z-axis"
-  [frame-vec])
 
+(defn ^PointableList pointables [^Gesture gesture]
+  (.pointables gesture))
+
+(defn pointables? [^Gesture gesture]
+  (not (.isEmpty (.pointables gesture))))
+
+(defn ^Pointable raw-pointable [^Gesture gesture pointable-id]
+  (.pointable gesture pointable-id))
+
+(defn pointable [^Gesture gesture pointable-id]
+  {:pre [(integer? pointable-id)]}
+  (let [pointable (.pointable gesture pointable-id)]
+    (when (.isValid pointable)
+      pointable)))
+
+(defn ^Pointable leftmost-pointable [^Gesture gesture]
+  (when (pointables? gesture)
+    (apply min-key #(-> % l-pointable/tip-position l-vector/x) (pointables gesture))))
+
+(defn ^Pointable rightmost-pointable [^Gesture gesture]
+  (when (pointables? gesture)
+    (apply max-key #(-> % l-pointable/tip-position l-vector/x) (pointables gesture))))
+
+(defn ^Pointable highest-pointable [^Gesture gesture]
+  (when (pointables? gesture)
+    (apply max-key #(-> % l-pointable/tip-position l-vector/y) (pointables gesture))))
+
+(defn ^Pointable lowest-pointable [^Gesture gesture]
+  (when (pointables? gesture)
+    (apply min-key #(-> % l-pointable/tip-position l-vector/y) (pointables gesture))))
