@@ -44,3 +44,6 @@ Gemfile.lock
 /autodoc
 /docs
 
+# Package Specific
+*.retry
+leap_lib/Leap_Motion_Installer_Packages_release_public_linux/
