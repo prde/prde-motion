@@ -1,0 +1,37 @@
+---
+
+- hosts: localhost
+  connection: local
+
+  vars:
+    leap_lib_root: "{{ playbook_dir }}/leap_lib"
+    leap_unpacked: "{{ leap_lib_root }}/Leap_Motion_Installer_Packages_release_public_linux"
+
+  tasks:
+    - name: install alien
+      dnf: name=alien state=latest
+      become: true
+      become_user: root
+      ignore_errors: yes
+
+    - name: download and unpack leap motion
+      unarchive: src=https://warehouse.leapmotion.com/apps/4186/download copy=no dest={{ leap_lib_root }}/
+      ignore_errors: yes
+
+    - name: get deb package name
+      shell: ls *.deb chdir={{ leap_unpacked }}/
+      register: deb_name
+
+    - name: create rpm from deb
+      command: alien -rv --scripts {{ item }} chdir={{ leap_unpacked }}/
+      with_items: "{{ deb_name.stdout }}"
+      become: true
+      become_user: root
+      ignore_errors: yes
+
+    - name: install rpms
+      command: rpm -ivh --nodeps --force {{ item }}
+      with_fileglob: "{{ leap_unpacked }}/*.x86_64.rpm"
+      become: yes
+      become_user: root
+      ignore_errors: yes
